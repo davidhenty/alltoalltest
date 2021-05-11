@@ -5,7 +5,7 @@
 #SBATCH --time=00:20:00
 #SBATCH --output=%x-%j.out
 #SBATCH --nodes=8
-#SBATCH --tasks-per-node=128
+#SBATCH --tasks-per-node=2
 #SBATCH --cpus-per-task=1
 # Replace [budget code] below with your budget code (e.g. t01)
 #SBATCH --account=z19
@@ -26,8 +26,8 @@ echo
 
 module --silent load epcc-job-env
 
-module swap cray-mpich cray-mpich-ucx
-module swap craype-network-ofi craype-network-ucx
+#module swap cray-mpich cray-mpich-ucx
+#module swap craype-network-ofi craype-network-ucx
 #export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/opt/cray/pe/mpich/8.0.16/ucx/cray/9.1/lib/pkgconfig/
 
  # Set the number of threads to 1

@@ -23,10 +23,10 @@ int main(void)
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
 
-  for (bloop=1; bloop <= 10; bloop++)
-    {
-      nbuf = 16*bloop;
+  nbuf = 1;
 
+  for (bloop=0; bloop < 10; bloop++)
+    {
       ns = nbuf*size;
       nr = nbuf*size;
   
@@ -103,6 +103,8 @@ int main(void)
       free(rbuf);
       free(requests);
       free(statuses);
+
+      nbuf = 2*nbuf;
     }
 
   MPI_Finalize();
