@@ -1,2 +1,2 @@
 # alltoalltest
-Simple benchmark for comparing collective and pont-to-point comms
+Simple benchmark for comparing collective and point-to-point comms
