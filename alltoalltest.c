@@ -47,7 +47,7 @@ int main(void)
   MPI_Comm_rank(physnodecomm, &physnoderank);
   MPI_Comm_size(physnodecomm, &physnodesize);
 
-  nvirtpernode = 8;
+  nvirtpernode = 4;
 
   // Split again with colour = (nvirtpernode*physnoderank)/physnodesize
   // and key = physnoderank
