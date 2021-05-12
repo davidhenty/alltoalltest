@@ -196,14 +196,6 @@ int main(void)
 
           if (noderank == 0)
             {
-              //          for (i=0; i < nbuf*nodesize; i++)
-              //            {
-              //              printf("Bef: nodenum, %d: tbuf1[%d] = %g, tbuf2[%d] = %g\n",
-              //                     nodenum, i, tbuf1[i], i, tbuf2[i]);
-              //            }
-              //
-              //          printf("transposing on node %d ...\n", nodenum);
-
               // Transpose from a size/numnode x size matrix to a size x
               // size/numnode matrix. Each "element" has nmsg entries.
 
@@ -227,14 +219,6 @@ int main(void)
                     }
                 }
 
-              //          printf("... done on node %d\n", nodenum);
-
-              //          for (i=0; i < nbuf*nodesize; i++)
-              //            {
-              //              printf("Aft: nodenum %d: tbuf1[%d] = %g, tbuf2[%d] = %g\n",
-              //                     nodenum, i, tbuf1[i], i, tbuf2[i]);
-              //            }
-
               // Now do the alltoall between nodes in spancomm. Try not to
               // use derived types here as it is the most costly operation
               // so do not want to slow it down.
@@ -251,23 +235,8 @@ int main(void)
           // sendtype as data received contiguously from a single source
           // node is scattered across different ranks on this node.
 
-          //      if (noderank == 0)
-          //        {
-          //          for (i=0; i < nbuf*nodesize; i++)
-          //            {
-          //              printf("Be2: nodenum %d: tbuf1[%d] = %g\n",
-          //                     nodenum, i, tbuf1[i]);
-          //            }
-          //        }
-      
           MPI_Scatter(tbuf1, 1, resizevector,
                       rbufp, nbuf, MPI_DOUBLE, 0, nodecomm);
-
-          //      for (i=0; i < nbuf; i++)
-          //        {
-          //          printf("Af2: rank %d: rbufp[%d] = %g\n",
-          //                 rank, i, rbufp[i]);
-          //        }
 
         }
 
