@@ -40,7 +40,7 @@ int main(void)
 
       for (i=0; i < nbuf; i++)
         {
-          sbuf[i] = rank*nbuf + (double) i;
+          sbuf[i] = rank*nbuf + (double) (i+1);
         }
 
       for (i=0; i < nbuf; i++)
@@ -160,8 +160,8 @@ int main(void)
 
       printf("Gathering ... on rank %d\n", rank);
 
-      MPI_Gather(sbuf,  nbuf*nodesize, MPI_DOUBLE,
-                 tbuf1, nbuf*nodesize, MPI_DOUBLE, 0, nodecomm);
+      MPI_Gather(sbuf,  nbuf, MPI_DOUBLE,
+                 tbuf1, nbuf, MPI_DOUBLE, 0, nodecomm);
 
       printf("... done on rank %d\n", rank);
 
@@ -183,7 +183,7 @@ int main(void)
           // Loop over entries in the source matrix in order
           // Source is of size mblk x nblk
 
-          mblk = size/numnode;
+          mblk = nodesize;  // = size/numnodes
           nblk = size;
 
           for (iblk=0; iblk < mblk; iblk++)
@@ -193,8 +193,8 @@ int main(void)
                   for (i=0; i < nmsg; i++)
                     {
                       {
-                        tbuf2[(jblk*mblk + iblk)*nmsg + i] = \
-                        tbuf1[(iblk*nblk + jblk)*nmsg+i];
+                        tbuf2[(jblk*mblk + iblk)*nmsg + i] =
+                        tbuf1[(iblk*nblk + jblk)*nmsg + i]   ;
                       }
                     }
                 }
@@ -208,15 +208,38 @@ int main(void)
                      nodenum, i, tbuf1[i], i, tbuf2[i]);
             }
 
-          // Now do the alltoall between nodes in spancomm
+          // Now do the alltoall between nodes in spancomm. Try not to
+          // use derived types here as it is the most costly operation
+          // so do not want to slow it down.
+          // Amount of data to send to each node is:
+          // total per node/numnode = nmsg*size*nodesize/numnode
+          // = nmsg*nodesize*nodesize
 
-          //          MPI_Alltoall(tbuf2, MPI_DOUBLE, nbuf,
-          //tbuf1, MPI_DOUBLE, nbuf,
-          //spancomm);
+          MPI_Alltoall(tbuf2, nmsg*nodesize*nodesize, MPI_DOUBLE,
+                       tbuf1, nmsg*nodesize*nodesize, MPI_DOUBLE,
+                       spancomm);
+        }
+
+      // Rank 0 on each node node now has a matrix of size
+      // mblk x nblk, made up of numnode mats of size mblk x mblk
+      // tiled horizontally. 
+      // Need to send out sections of size mblk separated by 
+
+      // Now scatter out across each node. Need a derived type for
+      // sendtype as data received contiguously from a single source
+      // node is scattered across different ranks on this node.
+      
+      MPI_Scatter(tbuf1, nbuf, MPI_DOUBLE,
+                  rbufp, nbuf, MPI_DOUBLE, 0, nodecomm);
+
+      for (i=0; i < nbuf; i++)
+        {
+          printf("Af2: rank %d: rbufp[%d] = %g\n",
+                 rank, i, rbufp[i]);
         }
 
       MPI_Barrier(comm);
-
+      
       tstop = MPI_Wtime();
 
       telapse = tstop - tstart;
