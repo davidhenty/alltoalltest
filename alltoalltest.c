@@ -119,6 +119,9 @@ int main(void)
 
       double *tbuf1, *tbuf2; // temporaries, one per node
 
+      MPI_Datatype vector, resizevector;
+      MPI_Aint dblesize;
+
       // Create node-local communicators
 
       MPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank,
@@ -220,16 +223,41 @@ int main(void)
                        spancomm);
         }
 
-      // Rank 0 on each node node now has a matrix of size
-      // mblk x nblk, made up of numnode mats of size mblk x mblk
-      // tiled horizontally. 
-      // Need to send out sections of size mblk separated by 
+      // For simplicity assume nmsg = 1 Rank 0 on each node node now
+      // has a matrix of size nblk x mblk, made up of numnode mats of
+      // size mblk x mblk tiled vertically (thinking C storage order
+      // here) Need to send out sections of size mblk separated by a
+      // stride of mbl*mblk. Count is numnode. Total amount of data to
+      // each process is numnode * mblk = numnode * nodesize = size as
+      // required.
+
+      MPI_Type_vector(numnode, nodesize*nmsg, nodesize*nodesize*nmsg,
+                      MPI_DOUBLE, &vector);
+
+      // Need to resize it to be nodesize*msg doubles so it tiles
+      // correctly.
+
+      MPI_Type_extent(MPI_DOUBLE, &dblesize);
+
+      MPI_Type_create_resized(vector, 0,
+                              nodesize*nmsg*dblesize, &resizevector);
+      
+      MPI_Type_commit(&resizevector);
 
       // Now scatter out across each node. Need a derived type for
       // sendtype as data received contiguously from a single source
       // node is scattered across different ranks on this node.
+
+      if (noderank == 0)
+        {
+          for (i=0; i < nbuf*nodesize; i++)
+            {
+              printf("Be2: nodenum %d: tbuf1[%d] = %g\n",
+                     nodenum, i, tbuf1[i]);
+            }
+        }
       
-      MPI_Scatter(tbuf1, nbuf, MPI_DOUBLE,
+      MPI_Scatter(tbuf1, 1, resizevector,
                   rbufp, nbuf, MPI_DOUBLE, 0, nodecomm);
 
       for (i=0; i < nbuf; i++)
