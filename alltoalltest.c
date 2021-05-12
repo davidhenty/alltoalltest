@@ -37,7 +37,7 @@ int main(void)
 
   // node-aware by-hand
 
-  // Create node-local communicators We actual man a virtual node
+  // Create node-local communicators We actualy mean a virtual node
   // which is some subset of physical processes on a node. We will
   // have nvirtpernode of these per physical node.
 
@@ -170,10 +170,10 @@ int main(void)
         }
 
       // For simplicity assume nmsg = 1 for this argument. After the
-      // gather and alltoall betwee nodes, rank 0 on each node node
+      // gather and alltoall between nodes, rank 0 on each node node
       // now has a matrix of size nblk x mblk, made up of numnode mats
       // of size mblk x mblk tiled vertically (thinking C storage
-      // order here) Need to send out sections of size mblk separated
+      // order here). Need to send out sections of size mblk separated
       // by a stride of mbl*mblk. Count is numnode. Total amount of
       // data to each process is numnode * mblk = numnode * nodesize =
       // size as required.
