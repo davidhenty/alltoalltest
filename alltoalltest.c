@@ -16,8 +16,9 @@ int main(void)
   MPI_Request *requests;
   MPI_Status *statuses;
 
-  MPI_Comm nodecomm, spancomm;
-  int nodesize, numnode, noderank, nodenum;
+  int nvirtpernode;
+  MPI_Comm physnodecomm, nodecomm, spancomm;
+  int physnodesize, physnoderank, nodesize, numnode, noderank, nodenum;
 
   char nodename[MPI_MAX_PROCESSOR_NAME];
   int iblk, jblk, mblk, nblk;
@@ -36,10 +37,23 @@ int main(void)
 
   // node-aware by-hand
 
-  // Create node-local communicators
+  // Create node-local communicators We actual man a virtual node
+  // which is some subset of physical processes on a node. We will
+  // have nvirtpernode of these per physical node.
 
   MPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank,
-                      MPI_INFO_NULL, &nodecomm);
+                      MPI_INFO_NULL, &physnodecomm);
+
+  MPI_Comm_rank(physnodecomm, &physnoderank);
+  MPI_Comm_size(physnodecomm, &physnodesize);
+
+  nvirtpernode = 8;
+
+  // Split again with colour = (nvirtpernode*physnoderank)/physnodesize
+  // and key = physnoderank
+
+  MPI_Comm_split(physnodecomm, (nvirtpernode*physnoderank)/physnodesize,
+                 physnoderank, &nodecomm);
 
   MPI_Comm_rank(nodecomm, &noderank);
   MPI_Comm_size(nodecomm, &nodesize);
@@ -57,7 +71,7 @@ int main(void)
 
   if (noderank == 0) printf("Node %d is <%s> with %d procs\n",
                              nodenum, nodename, nodesize);
-      
+
   nmsg = 1;
 
   for (bloop=0; bloop < 10; bloop++)
