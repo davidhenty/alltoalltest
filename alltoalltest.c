@@ -35,7 +35,18 @@ int main(void)
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
 
-  nmsg = 1;
+  MPI_Get_processor_name(nodename, &irank);
+
+  MPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank,
+                      MPI_INFO_NULL, &physnodecomm);
+
+  MPI_Comm_rank(physnodecomm, &physnoderank);
+  MPI_Comm_size(physnodecomm, &physnodesize);
+
+  if (physnoderank == 0) printf("Node %d is <%s> with %d procs\n",
+                            nodenum, nodename, physnodesize);
+
+  nmsg = 0;
 
   for (bloop=0; bloop < 10; bloop++)
     {
@@ -61,7 +72,8 @@ int main(void)
           rbufp[i] = -1.0;
         }
 
-      nrep = 10;
+      nrep = ((2048-size)/128+1)*100;
+      nrep = nrep / (bloop+1);
       tag = 0;
 
       MPI_Barrier(comm);
@@ -121,7 +133,7 @@ int main(void)
             }
         }
 
-      for (nvirtpernode=1; nvirtpernode <= 128; nvirtpernode*=2)
+      for (nvirtpernode=1; nvirtpernode <= 0; nvirtpernode*=2)
         {
 
           //          if (rank == 0) printf("\nnvirtpernode = %d\n\n", nvirtpernode);
@@ -130,12 +142,6 @@ int main(void)
           // Create node-local communicators We actualy mean a virtual node
           // which is some subset of physical processes on a node. We will
           // have nvirtpernode of these per physical node.
-
-          MPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank,
-                              MPI_INFO_NULL, &physnodecomm);
-
-          MPI_Comm_rank(physnodecomm, &physnoderank);
-          MPI_Comm_size(physnodecomm, &physnodesize);
 
           // Split again with colour = (nvirtpernode*physnoderank)/physnodesize
           // and key = physnoderank
@@ -152,13 +158,6 @@ int main(void)
 
           MPI_Comm_rank(spancomm, &nodenum);
           MPI_Comm_size(spancomm, &numnode);
-
-          MPI_Get_processor_name(nodename, &irank);
-
-          //          if (rank == 0) printf("Running on %d nodes\n", numnode);
-
-          //          if (noderank == 0) printf("Node %d is <%s> with %d procs\n",
-          //                                    nodenum, nodename, nodesize);
 
           if (noderank == 0)
             {
@@ -293,7 +292,14 @@ int main(void)
       free(requests);
       free(statuses);
 
-      nmsg = 2*nmsg;
+      if (nmsg == 0)
+        {
+          nmsg = 1;
+        }
+      else
+        {
+          nmsg = 2*nmsg;
+        }
     }
 
   MPI_Finalize();
